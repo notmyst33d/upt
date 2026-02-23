@@ -1,4 +1,4 @@
-import adapter from "@sveltejs/adapter-node";
+import adapter from "svelte-adapter-bun-next";
 
 export default {
 	kit: {
