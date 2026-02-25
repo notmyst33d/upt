@@ -14,11 +14,14 @@ class CelcnClient implements TrackClient {
     private cookies = new Cookies([{ key: "i18next_lng", value: "en" }]);
 
     async fetch(trackNumber: string): Promise<Event[]> {
-        console.log(this.cookies);
         if (this.viewState === undefined || this.eventValidation === undefined) {
             const response = this.cookies.apply(
                 await axios.get<string>("http://hccd.rtb56.com/track_query.aspx", {
-                    headers: { "Cookie": this.cookies.value() }
+                    headers: {
+                        "Origin": "http://hccd.rtb56.com",
+                        "Referer": "http://hccd.rtb56.com/track_query.aspx",
+                        "Cookie": this.cookies.value(),
+                    },
                 })
             );
 
@@ -26,24 +29,41 @@ class CelcnClient implements TrackClient {
             this.eventValidation = response.data.split("id=\"__EVENTVALIDATION\" value=\"", 2)[1].split("\"", 2)[0];
         }
 
+        let form = new FormData();
+        form.append("offsetx", "279");
+        form.append("voffset", "5");
+
         let response = this.cookies.apply(
-            await axios.get("http://hccd.rtb56.com/Captcha/CaptchaHandler.ashx?action=ValidateCaptcha&pageName=track_query", {
-                headers: { "Cookie": this.cookies.value() }
+            await axios.post("http://hccd.rtb56.com/Captcha/CaptchaHandler.ashx?action=ValidateCaptcha&pageName=track_query", form, {
+                headers: {
+                    "Origin": "http://hccd.rtb56.com",
+                    "Referer": "http://hccd.rtb56.com/track_query.aspx",
+                    "Cookie": this.cookies.value(),
+                },
             })
         );
         if (response.status != 200) {
             throw "captcha failed";
         }
 
-        const form = new FormData();
+        form = new FormData();
         form.append("__VIEWSTATE", this.viewState!);
         form.append("__EVENTVALIDATION", this.eventValidation!);
+        form.append("system", "");
+        form.append("pass", "");
+        form.append("firstLoad", "false");
+        form.append("Hidden1", "1");
         form.append("track_number", trackNumber);
+        form.append("mailNoList", "");
         form.append("btnSearch", "Track");
 
         response = this.cookies.apply(
             await axios.post<string>("http://hccd.rtb56.com/track_query.aspx", form, {
-                headers: { "Cookie": this.cookies.value() }
+                headers: {
+                    "Origin": "http://hccd.rtb56.com",
+                    "Referer": "http://hccd.rtb56.com/track_query.aspx",
+                    "Cookie": this.cookies.value(),
+                },
             })
         );
 
