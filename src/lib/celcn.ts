@@ -2,43 +2,52 @@
 // Copyright (C) 2026 Myst33d <myst33d@gmail.com>
 
 import axios from "axios";
-import type { Event } from "./event";
-import { CookieJar } from "tough-cookie";
-import { wrapper } from "axios-cookiejar-support";
 import type { TrackClient } from "./track_client";
+import type { Event } from "./event";
+import { Cookies } from "./cookies";
 
 class CelcnClient implements TrackClient {
-    viewState: string | undefined;
+    private viewState: string | undefined = undefined;
 
-    eventValidation: string | undefined;
+    private eventValidation: string | undefined = undefined;
+
+    private cookies = new Cookies([{ key: "i18next_lng", value: "en" }]);
 
     async fetch(trackNumber: string): Promise<Event[]> {
-        const jar = new CookieJar();
-        jar.setCookie("i18next_lng=en", "http://hccd.rtb56.com");
-
-        const client = wrapper(axios.create({ jar }));
-
+        console.log(this.cookies);
         if (this.viewState === undefined || this.eventValidation === undefined) {
-            const response = await client.get<string>("http://hccd.rtb56.com/track_query.aspx");
+            const response = this.cookies.apply(
+                await axios.get<string>("http://hccd.rtb56.com/track_query.aspx", {
+                    headers: { "Cookie": this.cookies.value() }
+                })
+            );
+
             this.viewState = response.data.split("id=\"__VIEWSTATE\" value=\"", 2)[1].split("\"", 2)[0];
             this.eventValidation = response.data.split("id=\"__EVENTVALIDATION\" value=\"", 2)[1].split("\"", 2)[0];
         }
 
-        let response = await client.get("http://hccd.rtb56.com/Captcha/CaptchaHandler.ashx?action=ValidateCaptcha&pageName=track_query");
+        let response = this.cookies.apply(
+            await axios.get("http://hccd.rtb56.com/Captcha/CaptchaHandler.ashx?action=ValidateCaptcha&pageName=track_query", {
+                headers: { "Cookie": this.cookies.value() }
+            })
+        );
         if (response.status != 200) {
             throw "captcha failed";
         }
 
         const form = new FormData();
-        form.append("__VIEWSTATE", this.viewState);
-        form.append("__EVENTVALIDATION", this.eventValidation);
+        form.append("__VIEWSTATE", this.viewState!);
+        form.append("__EVENTVALIDATION", this.eventValidation!);
         form.append("track_number", trackNumber);
         form.append("btnSearch", "Track");
 
-        response = await client.post<string>("http://hccd.rtb56.com/track_query.aspx", form);
+        response = this.cookies.apply(
+            await axios.post<string>("http://hccd.rtb56.com/track_query.aspx", form, {
+                headers: { "Cookie": this.cookies.value() }
+            })
+        );
 
-        const events = [];
-
+        const events: Event[] = [];
         const lines = response.data.split("\n");
         for (let i = 0; i < lines.length - 3; i++) {
             const line = lines[i];

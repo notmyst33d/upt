@@ -17,7 +17,7 @@ export const actions = {
         }
 
         let events: Event[] = [];
-        for (const client of [ozonRocketClient, cellogClient, celcnClient]) {
+        for (const client of [cellogClient, ozonRocketClient, celcnClient]) {
             events = [...events, ...await client.fetch(trackNumber)];
         }
 
