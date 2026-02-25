@@ -14,7 +14,6 @@ class CelcnClient implements TrackClient {
     private cookies = new Cookies([{ key: "i18next_lng", value: "en" }]);
 
     async fetch(trackNumber: string): Promise<Event[]> {
-        console.log(this.cookies);
         if (this.viewState === undefined || this.eventValidation === undefined) {
             const response = this.cookies.apply(
                 await axios.get<string>("http://hccd.rtb56.com/track_query.aspx", {

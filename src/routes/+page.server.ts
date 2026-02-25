@@ -22,6 +22,7 @@ export const actions = {
         }
 
         events.sort((a, b) => a.date.valueOf() - b.date.valueOf());
+        events.reverse();
 
         return { success: true, trackNumber, events };
     }
