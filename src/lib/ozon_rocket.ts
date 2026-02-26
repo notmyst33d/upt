@@ -34,6 +34,23 @@ class OzonRocketClient implements TrackClient {
         }
     }
 
+    private transformEvent(event: string): string {
+        const split = [];
+        let sb = "";
+        for (let i = 0; i < event.length; i++) {
+            if (i !== 0 && /[A-Z]/.test(event[i])) {
+                split.push(sb);
+                sb = event[i];
+            } else {
+                sb += event[i];
+            }
+        }
+        if (sb !== "") {
+            split.push(sb);
+        }
+        return split.map((v, i) => i === 0 ? v : v.toLowerCase()).join(" ");
+    }
+
     private async _fetch(trackNumber: string): Promise<Event[]> {
         const r = this.cookies.apply(
             await axios.get<Response>(`https://tracking.ozon.ru/p-api/ozon-track-bff/tracking/${trackNumber}`, {
@@ -45,7 +62,7 @@ class OzonRocketClient implements TrackClient {
             })
         );
         const d = ResponseSchema.parse(r.data);
-        return d.items.map(e => ({ date: e.moment, location: undefined, description: e.event, source: "OZON Rocket" }));
+        return d.items.map(e => ({ date: e.moment, location: undefined, description: this.transformEvent(e.event), source: "OZON Rocket" }));
     }
 }
 

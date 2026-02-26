@@ -1,14 +1,20 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Myst33d <myst33d@gmail.com>
 
-import { fail } from '@sveltejs/kit';
-import type { Actions } from './$types';
-import type { Event } from '$lib/event';
-import { client as cellogClient } from '$lib/cellog';
-import { client as ozonRocketClient } from '$lib/ozon_rocket';
-import { client as celcnClient } from '$lib/celcn';
+import { fail } from "@sveltejs/kit";
+import type { Actions, PageServerLoad } from "./$types";
+import type { Event } from "$lib/event";
+import { client as cellogClient } from "$lib/cellog";
+import { client as ozonRocketClient } from "$lib/ozon_rocket";
+import { client as celcnClient } from "$lib/celcn";
 
-export const actions = {
+const defaultClients = [
+    ozonRocketClient,
+    cellogClient,
+    celcnClient,
+];
+
+export const actions: Actions = {
     default: async ({ request }) => {
         const data = await request.formData();
         const trackNumber = data.get("track-number");
@@ -17,7 +23,7 @@ export const actions = {
         }
 
         let events: Event[] = [];
-        for (const client of [cellogClient, ozonRocketClient, celcnClient]) {
+        for (const client of defaultClients) {
             events = [...events, ...await client.fetch(trackNumber)];
         }
 
@@ -26,4 +32,12 @@ export const actions = {
 
         return { success: true, trackNumber, events };
     }
-} satisfies Actions;
+};
+
+export const load: PageServerLoad = async ({ cookies, locals, url }) => {
+    const lang = url.searchParams.get("lang");
+    if (lang !== null && lang != locals.lang) {
+        cookies.set("lang", lang, { path: "/" });
+        return { lang };
+    }
+};
