@@ -37,7 +37,8 @@ export const actions: Actions = {
 export const load: PageServerLoad = async ({ cookies, locals, url }) => {
     const lang = url.searchParams.get("lang");
     if (lang !== null && lang != locals.lang) {
-        cookies.set("lang", lang, { path: "/" });
+        // 100 years should be enough
+        cookies.set("lang", lang, { path: "/", maxAge: 100 * 60 * 60 * 24 * 365 });
         return { lang };
     }
 };
