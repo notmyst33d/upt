@@ -1,22 +1,26 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Myst33d <myst33d@gmail.com>
 
-import axios from "axios";
 import type { TrackClient } from "./track_client";
 import type { Event } from "./event";
 import { Cookies } from "./cookies";
+import { createDefaultClient } from "$lib";
 
 class CelcnClient implements TrackClient {
+    name: string = "CEL Express";
+
     private viewState: string | undefined = undefined;
 
     private eventValidation: string | undefined = undefined;
 
     private cookies = new Cookies([{ key: "i18next_lng", value: "en" }]);
 
+    private client = createDefaultClient();
+
     async fetch(trackNumber: string): Promise<Event[]> {
         if (this.viewState === undefined || this.eventValidation === undefined) {
             const response = this.cookies.apply(
-                await axios.get<string>("http://hccd.rtb56.com/track_query.aspx", {
+                await this.client.get<string>("http://hccd.rtb56.com/track_query.aspx", {
                     headers: { "Cookie": this.cookies.value() }
                 })
             );
@@ -26,11 +30,11 @@ class CelcnClient implements TrackClient {
         }
 
         let response = this.cookies.apply(
-            await axios.get("http://hccd.rtb56.com/Captcha/CaptchaHandler.ashx?action=ValidateCaptcha&pageName=track_query", {
+            await this.client.get("http://hccd.rtb56.com/Captcha/CaptchaHandler.ashx?action=ValidateCaptcha&pageName=track_query", {
                 headers: { "Cookie": this.cookies.value() }
             })
         );
-        if (response.status != 200) {
+        if (response.status !== 200) {
             throw "captcha failed";
         }
 
@@ -41,7 +45,7 @@ class CelcnClient implements TrackClient {
         form.append("btnSearch", "Track");
 
         response = this.cookies.apply(
-            await axios.post<string>("http://hccd.rtb56.com/track_query.aspx", form, {
+            await this.client.post<string>("http://hccd.rtb56.com/track_query.aspx", form, {
                 headers: { "Cookie": this.cookies.value() }
             })
         );
@@ -67,7 +71,7 @@ class CelcnClient implements TrackClient {
                     date: new Date(date.replace(" ", "T") + "Z"),
                     location: location,
                     description: event,
-                    source: "CEL Express",
+                    source: this.name,
                 });
             }
         }

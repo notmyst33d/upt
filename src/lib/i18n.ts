@@ -19,6 +19,7 @@ export const i18nData: I18nLangMap = {
         "system_language": "System language",
         "language": "Select language",
         "apply": "Apply",
+        "unavailable_sources": "Unavailable sources",
     },
     "ru": {
         "tracking_number": "Трек номер",
@@ -30,12 +31,20 @@ export const i18nData: I18nLangMap = {
         "system_language": "Системный язык",
         "language": "Выбрать язык",
         "apply": "Применить",
+        "unavailable_sources": "Недоступные сервисы",
     },
 };
 
 export function i18n(key: string): string {
-    if (i18nData[page.data.lang] === undefined) {
-        return "Missing language";
+    return _i18n(i18nData, page.data.lang, key);
+}
+
+function _i18n(langMap: I18nLangMap, lang: string, key: string): string {
+    if (langMap[lang] === undefined) {
+        lang = "en";
     }
-    return i18nData[page.data.lang][key];
+    if (langMap[lang][key] === undefined) {
+        return key;
+    }
+    return langMap[lang][key];
 }

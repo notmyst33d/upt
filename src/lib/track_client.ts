@@ -4,5 +4,7 @@
 import type { Event } from "./event";
 
 export interface TrackClient {
+    name: string;
+
     fetch(trackNumber: string): Promise<Event[]>;
 }

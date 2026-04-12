@@ -18,25 +18,30 @@ export const actions: Actions = {
     default: async ({ request }) => {
         const data = await request.formData();
         const trackNumber = data.get("track-number");
-        if (typeof trackNumber != "string") {
-            return fail(400, { trackNumber });
+        if (typeof trackNumber !== "string") {
+            return fail(400);
         }
 
-        let events: Event[] = [];
+        const events: Event[] = [];
+        const failedClients: string[] = [];
         for (const client of defaultClients) {
-            events = [...events, ...await client.fetch(trackNumber)];
+            try {
+                events.push.apply(events, await client.fetch(trackNumber));
+            } catch (e) {
+                failedClients.push(client.name);
+            }
         }
 
         events.sort((a, b) => a.date.valueOf() - b.date.valueOf());
         events.reverse();
 
-        return { success: true, trackNumber, events };
+        return { trackNumber, events, failedClients };
     }
 };
 
 export const load: PageServerLoad = async ({ cookies, locals, url }) => {
     const lang = url.searchParams.get("lang");
-    if (lang !== null && lang != locals.lang) {
+    if (lang !== null && lang !== locals.lang) {
         // 100 years should be enough
         cookies.set("lang", lang, { path: "/", maxAge: 100 * 60 * 60 * 24 * 365 });
         return { lang };

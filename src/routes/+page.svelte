@@ -40,7 +40,17 @@
     {/if}
 </form>
 
+{#if form?.failedClients.length ?? 0 > 0}
+    <p class="failed">
+        {i18n("unavailable_sources")}: {form!.failedClients.join(", ")}
+    </p>
+{/if}
+
 <style>
+    .failed {
+        color: #992a2a;
+    }
+
     table {
         margin-top: 8px;
         border-collapse: collapse;
