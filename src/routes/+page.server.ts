@@ -7,8 +7,10 @@ import type { Event } from "$lib/event";
 import { client as cellogClient } from "$lib/cellog";
 import { client as ozonRocketClient } from "$lib/ozon_rocket";
 import { client as celcnClient } from "$lib/celcn";
+import { client as cdekClient } from "$lib/cdek";
 
 const defaultClients = [
+    cdekClient,
     ozonRocketClient,
     cellogClient,
     celcnClient,
@@ -17,7 +19,7 @@ const defaultClients = [
 export const actions: Actions = {
     default: async ({ request }) => {
         const data = await request.formData();
-        const trackNumber = data.get("track-number");
+        const trackNumber = data.get("track_number");
         if (typeof trackNumber !== "string") {
             return fail(400);
         }

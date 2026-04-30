@@ -20,7 +20,7 @@ class CellogClient implements TrackClient {
     private client = createDefaultClient();
 
     async fetch(trackNumber: string): Promise<Event[]> {
-        return this.client.get<Response>(`https://cellog.ru/api/tracking/${trackNumber}`, { timeout: 5000 })
+        return this.client.get<Response>(`https://cellog.ru/api/tracking/${trackNumber}`)
             .then(r => ResponseSchema.parse(r.data))
             .then(d => d.map(e => ({ date: e.EventTime, location: e.EventComment, description: e.EventText, source: this.name })));
     }

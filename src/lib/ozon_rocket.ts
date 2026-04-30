@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Myst33d <myst33d@gmail.com>
 
 import z from "zod";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import type { Event } from "./event";
 import type { TrackClient } from "./track_client";
 import { Cookies } from "./cookies";
