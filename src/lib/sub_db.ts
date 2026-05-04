@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Myst33d <myst33d@gmail.com>
 
-import Database from "better-sqlite3";
+import Database from "bun:sqlite";
 import z from "zod";
 
 export const SubscriptionSchema = z.object({
