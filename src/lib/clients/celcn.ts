@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Myst33d <myst33d@gmail.com>
 
-import type { TrackClient } from "./track_client";
-import type { Event } from "./event";
-import { Cookies } from "./cookies";
-import { createDefaultClient } from "$lib";
+import { getDefaultHttpClient } from "..";
+import type { TrackClient } from "../track_client";
+import type { ParcelTrackEvent } from "../parcel_track_event";
+import { Cookies } from "../cookies";
 
-class CelcnClient implements TrackClient {
+export class CelcnClient implements TrackClient {
     name: string = "CEL Express";
 
     private viewState: string | undefined = undefined;
@@ -15,9 +15,9 @@ class CelcnClient implements TrackClient {
 
     private cookies = new Cookies([{ key: "i18next_lng", value: "en" }]);
 
-    private client = createDefaultClient();
+    private client = getDefaultHttpClient();
 
-    async fetch(trackNumber: string): Promise<Event[]> {
+    async fetch(trackNumber: string): Promise<ParcelTrackEvent[]> {
         if (this.viewState === undefined || this.eventValidation === undefined) {
             const response = this.cookies.apply(
                 await this.client.get<string>("http://hccd.rtb56.com/track_query.aspx", {
@@ -50,7 +50,7 @@ class CelcnClient implements TrackClient {
             })
         );
 
-        const events: Event[] = [];
+        const events: ParcelTrackEvent[] = [];
         const lines = response.data.split("\n");
         for (let i = 0; i < lines.length - 3; i++) {
             const line = lines[i];
@@ -79,5 +79,3 @@ class CelcnClient implements TrackClient {
         return events;
     }
 }
-
-export const client = new CelcnClient();

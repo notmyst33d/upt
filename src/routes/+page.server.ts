@@ -1,51 +1,44 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Myst33d <myst33d@gmail.com>
 
-import { fail } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
-import type { Event } from "$lib/event";
-import { client as cellogClient } from "$lib/cellog";
-import { client as ozonRocketClient } from "$lib/ozon_rocket";
-import { client as celcnClient } from "$lib/celcn";
-import { client as cdekClient } from "$lib/cdek";
 
-const defaultClients = [
-    cdekClient,
-    ozonRocketClient,
-    cellogClient,
-    celcnClient,
-];
+import { getDefaultClients, track } from "$lib";
+import { fail, redirect } from "@sveltejs/kit";
 
 export const actions: Actions = {
-    default: async ({ request }) => {
+    default: async ({ request, url }) => {
         const data = await request.formData();
         const trackNumber = data.get("track_number");
-        if (typeof trackNumber !== "string") {
+        let sources = data.get("sources");
+        if (typeof trackNumber !== "string" || typeof sources !== "string") {
             return fail(400);
         }
 
-        const events: Event[] = [];
-        const failedClients: string[] = [];
-        for (const client of defaultClients) {
-            try {
-                events.push.apply(events, await client.fetch(trackNumber));
-            } catch (e) {
-                failedClients.push(client.name);
-            }
+        const urlTrackNumber = url.searchParams.get("track_number");
+        const urlSources = url.searchParams.get("sources");
+
+        if (trackNumber === urlTrackNumber && urlSources !== "all" && urlSources !== null) {
+            return {};
         }
 
-        events.sort((a, b) => a.date.valueOf() - b.date.valueOf());
-        events.reverse();
-
-        return { trackNumber, events, failedClients };
-    }
+        const clients = getDefaultClients();
+        const trackData = await track(clients, trackNumber);
+        const newParams = new URLSearchParams();
+        newParams.set("track_number", trackNumber);
+        newParams.set("sources", trackData.sources.join(","));
+        return redirect(307, "/?" + newParams.toString());
+    },
 };
 
-export const load: PageServerLoad = async ({ cookies, locals, url }) => {
-    const lang = url.searchParams.get("lang");
-    if (lang !== null && lang !== locals.lang) {
-        // 100 years should be enough
-        cookies.set("lang", lang, { path: "/", maxAge: 100 * 60 * 60 * 24 * 365 });
-        return { lang };
+export const load: PageServerLoad = async ({ url }) => {
+    const trackNumber = url.searchParams.get("track_number");
+    const sources = url.searchParams.get("sources");
+    if (typeof trackNumber !== "string" || typeof sources !== "string") {
+        return {};
     }
-};
+
+    const clients = getDefaultClients();
+    const clientNames = sources.split(",");
+    return await track(clients.filter(c => clientNames.includes(c.name)), trackNumber);
+}

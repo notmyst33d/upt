@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Myst33d <myst33d@gmail.com>
 
-import type { Event } from "./event";
 import z from "zod";
-import type { TrackClient } from "./track_client";
-import { createDefaultClient } from "$lib";
+
+import { getDefaultHttpClient } from "..";
+import type { ParcelTrackEvent } from "../parcel_track_event";
+import type { TrackClient } from "../track_client";
 
 const ResponseSchema = z.array(z.object({
     EventTime: z.iso.datetime({ offset: true }).transform(v => new Date(v)),
@@ -14,16 +15,14 @@ const ResponseSchema = z.array(z.object({
 
 type Response = z.infer<typeof ResponseSchema>;
 
-class CellogClient implements TrackClient {
+export class CellogClient implements TrackClient {
     name: string = "CEL Logistics";
 
-    private client = createDefaultClient();
+    private client = getDefaultHttpClient();
 
-    async fetch(trackNumber: string): Promise<Event[]> {
+    async fetch(trackNumber: string): Promise<ParcelTrackEvent[]> {
         return this.client.get<Response>(`https://cellog.ru/api/tracking/${trackNumber}`)
             .then(r => ResponseSchema.parse(r.data))
             .then(d => d.map(e => ({ date: e.EventTime, location: e.EventComment, description: e.EventText, source: this.name })));
     }
 }
-
-export const client = new CellogClient();

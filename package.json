@@ -12,6 +12,7 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
 	},
 	"devDependencies": {
+		"@types/better-sqlite3": "^7.6.13",
 		"@sveltejs/kit": "^2.50.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"svelte": "^5.51.0",
@@ -22,6 +23,8 @@
 		"zod": "^4.3.6"
 	},
 	"dependencies": {
-		"axios": "^1.13.5"
+		"axios": "^1.13.5",
+		"better-sqlite3": "^12.9.0",
+		"cron": "^4.4.0"
 	}
 }

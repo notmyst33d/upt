@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (C) 2026 Myst33d <myst33d@gmail.com>
 
-import type { Event } from "./event";
 import z from "zod";
-import type { TrackClient } from "./track_client";
-import { createDefaultClient } from "$lib";
-import { Cookies } from "./cookies";
 import { AxiosError } from "axios";
+
+import { getDefaultHttpClient } from "..";
+import type { ParcelTrackEvent } from "../parcel_track_event";
+import type { TrackClient } from "../track_client";
+import { Cookies } from "../cookies";
 
 const ResponseSchema = z.object({
     success: z.boolean(),
@@ -28,14 +29,14 @@ const ResponseSchema = z.object({
 
 type Response = z.infer<typeof ResponseSchema>;
 
-class CDEKClient implements TrackClient {
+export class CdekClient implements TrackClient {
     name: string = "CDEK";
 
-    private client = createDefaultClient();
+    private client = getDefaultHttpClient();
 
     private cookies = new Cookies();
 
-    async fetch(trackNumber: string): Promise<Event[]> {
+    async fetch(trackNumber: string): Promise<ParcelTrackEvent[]> {
         try {
             return await this._fetch(trackNumber);
         } catch (e) {
@@ -47,7 +48,7 @@ class CDEKClient implements TrackClient {
         }
     }
 
-    private async _fetch(trackNumber: string): Promise<Event[]> {
+    private async _fetch(trackNumber: string): Promise<ParcelTrackEvent[]> {
         const response = this.cookies.apply(
             await this.client.get<Response>(`https://www.cdek.ru/api-site/track/info/?track=${trackNumber}&locale=ru&token=&phone=`, {
                 maxRedirects: 0,
@@ -59,7 +60,7 @@ class CDEKClient implements TrackClient {
         );
         const data = ResponseSchema.parse(response.data);
         return data.data!.statuses.filter(status => status.completed).flatMap(status => {
-            const events: Event[] = [{
+            const events: ParcelTrackEvent[] = [{
                 date: status.date!,
                 location: undefined,
                 description: status.name,
@@ -81,5 +82,3 @@ class CDEKClient implements TrackClient {
         });
     }
 }
-
-export const client = new CDEKClient();
